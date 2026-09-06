@@ -154,78 +154,30 @@
     counters.forEach(function (el) { countObs.observe(el); });
   }
 
-  /* ---------- Hero cinematic slideshow ---------- */
-  var heroSlides = document.querySelectorAll(".hero-slide");
-  var heroBtns = document.querySelectorAll(".hero-controls .hc-btn");
-  var heroCount = document.getElementById("heroCount");
-  var heroName = document.getElementById("heroName");
-  var heroLoc = document.getElementById("heroLoc");
-  var HERO_META = [
-    { name: "MGC Jewel", loc: "Bahria Town Phase 8" },
-    { name: "MGC Divine", loc: "Bahria Town Phase 8" },
-    { name: "Liberty Terraces", loc: "Bahria Town Phase 8" },
-    { name: "Picasso by MGC", loc: "Phase 7 · Bahria Town" },
-    { name: "El Casa by MGC", loc: "Mumtaz City · Islamabad" },
-    { name: "Holiday Inn & Suites", loc: "GT Road · DHA Phase II" }
-  ];
-  var HERO_DURATION = 6000;
-  var heroIdx = 0;
-  var heroTimer = null;
-
-  function heroPad(n) { return n < 10 ? "0" + n : String(n); }
-  function clearHeroTimer() {
-    if (heroTimer) { clearTimeout(heroTimer); heroTimer = null; }
-  }
-  function setHero(i, manual) {
-    if (!heroSlides.length) return;
-    heroIdx = (i + heroSlides.length) % heroSlides.length;
-    heroSlides.forEach(function (s, k) { s.classList.toggle("active", k === heroIdx); });
-    if (heroBtns.length) {
-      heroBtns.forEach(function (b, k) { b.classList.toggle("active", k === heroIdx); });
+  /* ---------- Hero video ---------- */
+  var heroEl = document.getElementById("hero");
+  var heroVideo = document.querySelector(".hero-video");
+  if (heroEl && heroVideo) {
+    var posterD = heroVideo.getAttribute("poster");
+    var posterM = heroVideo.getAttribute("data-poster-mobile") || posterD;
+    function showHeroPoster() {
+      if (heroEl.classList.contains("poster-mode")) return;
+      heroEl.classList.add("poster-mode");
+      try { heroVideo.pause(); } catch (e) {}
+      var poster = window.matchMedia("(max-width: 767px)").matches ? posterM : posterD;
+      if (poster) heroEl.style.backgroundImage = 'url("' + poster + '")';
     }
-    if (heroCount) heroCount.innerHTML = heroPad(heroIdx + 1) + " <b>/ " + heroPad(heroSlides.length) + "</b>";
-    if (HERO_META[heroIdx]) {
-      if (heroName) heroName.textContent = HERO_META[heroIdx].name;
-      if (heroLoc) heroLoc.textContent = HERO_META[heroIdx].loc;
-    }
-    if (manual && !reduced) restartHero();
-    else if (reduced) clearHeroTimer();
-  }
-  function nextHero() { setHero(heroIdx + 1, true); }
-  function restartHero() {
-    clearHeroTimer();
-    heroTimer = setTimeout(nextHero, HERO_DURATION);
-  }
-
-  if (heroSlides.length) {
-    heroBtns.forEach(function (b) {
-      b.addEventListener("click", function () {
-        setHero(parseInt(b.getAttribute("data-hero"), 10) || 0, true);
-      });
-    });
     if (reduced) {
-      setHero(0);
+      showHeroPoster();
     } else {
-      setHero(0);
-      restartHero();
-      document.addEventListener("visibilitychange", function () {
-        if (document.hidden) clearHeroTimer();
-        else restartHero();
-      });
-      window.addEventListener("focus", restartHero);
-      var heroEl = document.getElementById("hero");
-      if (heroEl && "IntersectionObserver" in window) {
-        var heroVis = new IntersectionObserver(function (entries) {
-          if (entries[0].isIntersecting) restartHero();
-          else clearHeroTimer();
-        }, { threshold: 0.15 });
-        heroVis.observe(heroEl);
+      heroVideo.addEventListener("error", showHeroPoster, { once: true });
+      if (typeof heroVideo.play === "function") {
+        var heroPlay = heroVideo.play();
+        if (heroPlay && typeof heroPlay.catch === "function") heroPlay.catch(showHeroPoster);
       }
-    }
-    /* Preload the next slide so the first crossfade is instant */
-    if (!reduced) {
-      var pre = new Image();
-      pre.src = heroSlides[1].querySelector("img").src;
+      window.setTimeout(function () {
+        if (heroVideo.readyState === 0) showHeroPoster();
+      }, 4000);
     }
   }
 

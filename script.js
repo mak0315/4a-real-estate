@@ -1,465 +1,488 @@
-/* ==========================================
-   4A REAL ESTATE - JAVASCRIPT
-   ========================================== */
+/* ============================================================
+   4A REAL ESTATE — SITE BEHAVIOURS
+   WhatsApp, calculator, lead form, menu, reveals, counters,
+   lightbox, rayed-motion-safe
+   ============================================================ */
+(function () {
+  "use strict";
 
-const WHATSAPP_NUMBER = "923333959207";
-const WHATSAPP_API = `https://wa.me/${WHATSAPP_NUMBER}`;
+  /* ---------- Config ---------- */
+  var PHONE_TEL = "+923333959207";
+  var WA_NUMBER = "923333959207";
+  var GENERAL_MSG =
+    "Hello Muhammad Ayan, I found 4A Real Estate and I'm interested in " +
+    "property investment. Please share the available projects and payment plans.";
 
-const WHATSAPP_DEFAULT_MESSAGE =
-    "Hello Muhammad Ayan, I found 4A Real Estate and I'm interested in property investment. Please share the available projects and payment plans.";
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function openWhatsApp(message = "") {
-    const text = encodeURIComponent(message || WHATSAPP_DEFAULT_MESSAGE);
-    window.open(`${WHATSAPP_API}?text=${text}`, "_blank");
-}
+  function waUrl(text) {
+    return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
+  }
+  function openWa(text, target) {
+    (target || window.open)(waUrl(text), "_blank", "noopener");
+  }
 
-function openWhatsAppProject(projectName) {
-    const message = encodeURIComponent(
-        `Hello Muhammad Ayan, I found 4A Real Estate and I'm interested in ${projectName}. Please share the latest prices, payment plan and available units.`
-    );
-    window.open(`${WHATSAPP_API}?text=${message}`, "_blank");
-}
+  /* [36] Current year */
+  var yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-function openWhatsAppCategory(type) {
-    const labels = {
-        residential: "Residential Property",
-        commercial: "Commercial Property",
-        hospitality: "Hospitality Investment",
-        investment: "Investment Opportunity"
-    };
-    const label = labels[type] || "Property";
-    const message = encodeURIComponent(
-        `Hello Muhammad Ayan, I found 4A Real Estate and I'm interested in ${label}. Please share the available options, latest prices and payment plans.`
-    );
-    window.open(`${WHATSAPP_API}?text=${message}`, "_blank");
-}
+  /* ---------- Header scroll state ---------- */
+  var header = document.querySelector(".site-header");
+  var backTop = document.getElementById("backToTop");
+  var stickyCta = document.getElementById("stickyCta");
 
-function openWhatsAppInsight(title) {
-    const message = encodeURIComponent(
-        `Hello Muhammad Ayan, I found 4A Real Estate and I'd like to discuss: ${title}. Please share your guidance.`
-    );
-    window.open(`${WHATSAPP_API}?text=${message}`, "_blank");
-}
+  function onScroll() {
+    var y = window.scrollY || window.pageYOffset;
+    if (header) header.classList.toggle("scrolled", y > 10);
+    if (backTop) backTop.classList.toggle("show", y > 640);
+    if (stickyCta) stickyCta.classList.toggle("show", y > 380);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 
-function getPaymentPlan() {
-    const message = encodeURIComponent(
-        "Hello Muhammad Ayan, I found 4A Real Estate and I'd like to know the current payment plans and installment options for the available projects."
-    );
-    window.open(`${WHATSAPP_API}?text=${message}`, "_blank");
-}
-
-function bookVisit() {
-    const message = encodeURIComponent(
-        "Hello Muhammad Ayan, I would like to schedule a project visit. Please let me know the available dates and projects."
-    );
-    window.open(`${WHATSAPP_API}?text=${message}`, "_blank");
-}
-
-/* ==========================================
-   INVESTMENT CALCULATOR
-   ========================================== */
-
-function formatNumber(n) {
-    const rounded = Math.round(n);
-    if (Math.abs(rounded) < 1000) return rounded.toString();
-    const s = String(rounded);
-    const last3 = s.slice(-3);
-    const rest = s.slice(0, -3);
-    const restFormatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
-    return restFormatted + "," + last3;
-}
-
-function calculateInvestment() {
-    const valueEl = document.getElementById("propValue");
-    const downEl = document.getElementById("downPct");
-    const durationEl = document.getElementById("duration");
-    if (!valueEl || !downEl || !durationEl) return null;
-
-    const propValue = parseFloat(valueEl.value) || 0;
-    const downPct = Math.min(100, Math.max(0, parseFloat(downEl.value) || 0));
-    const duration = parseInt(durationEl.value, 10) || 0;
-
-    if (propValue <= 0 || duration <= 0) {
-        setCalcResult("resInitial", 0);
-        setCalcResult("resBalance", 0);
-        setCalcResult("resMonthly", 0);
-        return null;
-    }
-
-    const initial = propValue * (downPct / 100);
-    const balance = propValue - initial;
-    const monthly = balance / duration;
-
-    setCalcResult("resInitial", initial);
-    setCalcResult("resBalance", balance);
-    setCalcResult("resMonthly", monthly);
-
-    return { propValue, downPct, duration, initial, balance, monthly };
-}
-
-function setCalcResult(id, value) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = value > 0 ? `PKR ${formatNumber(value)}` : "—";
-}
-
-function sendCalculatorWhatsApp() {
-    const result = calculateInvestment();
-    if (!result) {
-        alert("Please enter a valid property value and payment duration.");
-        return;
-    }
-    const message = encodeURIComponent(
-        "Hello Muhammad Ayan, I used the 4A Real Estate investment calculator and would like personalized details.\n\n" +
-        "📊 My Estimate\n" +
-        `🏠 Property Value: PKR ${formatNumber(result.propValue)}\n` +
-        `📉 Down Payment: ${result.downPct}% (PKR ${formatNumber(result.initial)})\n` +
-        `💵 Remaining Balance: PKR ${formatNumber(result.balance)}\n` +
-        `🗓️ Duration: ${result.duration} months\n` +
-        `💰 Estimated Monthly: PKR ${formatNumber(result.monthly)}\n\n` +
-        "Please share the latest prices, availability and payment plans for suitable projects."
-    );
-    window.open(`${WHATSAPP_API}?text=${message}`, "_blank");
-}
-
-["propValue", "downPct", "duration"].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("input", calculateInvestment);
-    el.addEventListener("change", calculateInvestment);
-});
-
-/* ==========================================
-   PROPERTY MATCHING
-   ========================================== */
-
-let currentGoal = null;
-
-const goalData = {
-    home: {
-        title: "Looking for a Home",
-        text: "We can help you explore residential options such as apartments and terraces in selected MGC projects, matched to your budget and preferred location.",
-        message: "Hello Muhammad Ayan, I'm looking for a home and I'd like help exploring suitable residential options in Islamabad/Rawalpindi."
-    },
-    commercial: {
-        title: "Commercial Investment",
-        text: "Explore commercial opportunities such as retail and mixed-use units in projects like MGC Jewel, MGC Divine, MGC-5 and Picasso by MGC.",
-        message: "Hello Muhammad Ayan, I'm interested in commercial property investment and would like details on suitable options."
-    },
-    hospitality: {
-        title: "Hospitality Investment",
-        text: "Consider hospitality opportunities such as branded hotel suites, including Best Western Plus at MGC Jewel and Holiday Inn & Suites in DHA Phase II.",
-        message: "Hello Muhammad Ayan, I'm interested in hospitality investment and would like details on hotel suite opportunities."
-    },
-    longterm: {
-        title: "Long-Term Investment",
-        text: "For long-term goals, investors often explore growing areas like Bahria Town Phase 8 and Mumtaz City across different MGC projects.",
-        message: "Hello Muhammad Ayan, I'm interested in long-term property investment and would like recommendations based on my budget."
-    },
-    unsure: {
-        title: "Let's Figure It Out Together",
-        text: "No problem. Share your budget and goals on WhatsApp and we'll guide you toward suitable opportunities.",
-        message: "Hello Muhammad Ayan, I'm not sure which property suits me. Could you help me explore options based on my budget?"
-    }
-};
-
-function setGoal(key) {
-    const data = goalData[key];
-    if (!data) return;
-    currentGoal = key;
-
-    const buttons = document.querySelectorAll(".goal-btn");
-    buttons.forEach(function (btn) {
-        btn.classList.remove("active");
-        if (btn.getAttribute("onclick") && btn.getAttribute("onclick").indexOf(`setGoal('${key}')`) !== -1) {
-            btn.classList.add("active");
-        }
+  if (backTop) {
+    backTop.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     });
+  }
 
-    const title = document.getElementById("matchTitle");
-    const text = document.getElementById("matchText");
-    const result = document.getElementById("matchingResult");
-    if (title) title.textContent = data.title;
-    if (text) text.textContent = data.text;
-    if (result) {
-        result.hidden = false;
-        result.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-}
+  /* ---------- Mobile menu ---------- */
+  var hamburger = document.getElementById("hamburger");
+  var mobileNav = document.getElementById("mobileNav");
 
-function openWhatsAppGoal() {
-    const data = goalData[currentGoal];
-    const message = data ? data.message : "Hello Muhammad Ayan, I'd like help finding the right property.";
-    openWhatsApp(message);
-}
+  function closeMenu() {
+    if (!mobileNav) return;
+    mobileNav.classList.remove("open");
+    document.body.classList.remove("menu-open");
+    if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+  }
+  function toggleMenu() {
+    if (!mobileNav) return;
+    var open = mobileNav.classList.toggle("open");
+    document.body.classList.toggle("menu-open", open);
+    if (hamburger) hamburger.setAttribute("aria-expanded", String(open));
+  }
+  if (hamburger) hamburger.addEventListener("click", toggleMenu);
+  if (mobileNav) {
+    mobileNav.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", closeMenu);
+    });
+  }
+  window.addEventListener("resize", function () {
+    if (window.innerWidth > 991) closeMenu();
+  });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeMenu();
+  });
 
-/* ==========================================
-   PROJECT SELECTION
-   ========================================== */
-
-function selectProject(projectName) {
-    const select = document.getElementById("preferredProject");
-    if (select) {
-        const normalized = projectName.replace(/ and /gi, " & ");
-        Array.prototype.forEach.call(select.options, function (opt) {
-            const optName = (opt.value === opt.textContent.trim()) ? opt.value : opt.textContent.trim();
-            if (
-                opt.value.toLowerCase() === normalized.toLowerCase() ||
-                optName.toLowerCase() === normalized.toLowerCase() ||
-                optName.toLowerCase() === projectName.toLowerCase()
-            ) {
-                select.value = opt.value;
-            }
+  /* ---------- Scroll-spy: active nav state [37] ---------- */
+  var navLinks = document.querySelectorAll(".nav-links a");
+  if (navLinks.length && "IntersectionObserver" in window) {
+    var spy = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            navLinks.forEach(function (l) {
+              l.classList.toggle(
+                "active",
+                l.getAttribute("href") === "#" + entry.target.id
+              );
+            });
+          }
         });
-    }
-
-    const contact = document.getElementById("contact");
-    if (contact) contact.scrollIntoView({ behavior: "smooth" });
-
-    const nameInput = document.getElementById("name");
-    if (nameInput) {
-        setTimeout(function () {
-            nameInput.focus();
-        }, 700);
-    }
-}
-
-/* ==========================================
-   LEAD FORM
-   ========================================== */
-
-function submitForm(event) {
-    event.preventDefault();
-
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const interest = document.getElementById("interest").value;
-    const project = document.getElementById("preferredProject").value;
-    const budget = document.getElementById("budget").value;
-    const message = document.getElementById("message").value.trim();
-    const consent = document.getElementById("consent").checked;
-
-    if (!name || !phone || !interest || !project || !budget || !consent) {
-        alert("Please fill in all required fields and provide consent.");
-        return;
-    }
-
-    if (!isValidPhone(phone)) {
-        alert("Please enter a valid phone number.");
-        return;
-    }
-
-    const whatsappMessage = encodeURIComponent(
-        "📋 New Inquiry - 4A Real Estate 📋\n\n" +
-        `👤 Name: ${name}\n` +
-        `📱 Phone/WhatsApp: ${phone}\n` +
-        `🏷️ Interested In: ${interest}\n` +
-        `🏢 Preferred Project: ${project}\n` +
-        `💰 Budget: ${budget}\n` +
-        (message ? `💬 Message: ${message}\n` : "") +
-        "\nPlease contact me with the latest details. Thank you!"
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
     );
+    ["hero", "projects", "locations", "investment", "ayan", "contact"]
+      .map(function (id) { return document.getElementById(id); })
+      .filter(Boolean)
+      .forEach(function (sec) { spy.observe(sec); });
+  }
 
-    window.open(`${WHATSAPP_API}?text=${whatsappMessage}`, "_blank");
+  /* ---------- Reveal on scroll [38][45] ---------- */
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduced || !("IntersectionObserver" in window)) {
+    reveals.forEach(function (el) { el.classList.add("in-view"); });
+  } else {
+    var revealObs = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+            revealObs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+    );
+    reveals.forEach(function (el) { revealObs.observe(el); });
+  }
 
-    const form = document.getElementById("leadForm");
-    const success = document.getElementById("formSuccess");
-    if (form) form.hidden = true;
-    if (success) success.hidden = false;
-}
+  /* ---------- Counters ---------- */
+  function animateCounter(el) {
+    var target = parseInt(el.getAttribute("data-count"), 10);
+    if (isNaN(target)) return;
+    var suffix = el.getAttribute("data-suffix") || "";
+    var dur = 1400;
+    var t0 = null;
+    function tick(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  var counted = [];
+  var counters = document.querySelectorAll(".stat-num[data-count]");
+  if (reduced || !("IntersectionObserver" in window)) {
+    counters.forEach(function (el) { el.textContent = el.getAttribute("data-count") + (el.getAttribute("data-suffix") || ""); });
+  } else {
+    var countObs = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting && counted.indexOf(entry.target) === -1) {
+            counted.push(entry.target);
+            animateCounter(entry.target);
+            countObs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.4 }
+    );
+    counters.forEach(function (el) { countObs.observe(el); });
+  }
 
-function isValidPhone(phone) {
-    const phoneRegex = /^[\d\-\+\s\(\)]{10,}$/;
-    return phoneRegex.test(phone);
-}
+  /* ---------- Hero cinematic slideshow ---------- */
+  var heroSlides = document.querySelectorAll(".hero-slide");
+  var heroBtns = document.querySelectorAll(".hero-controls .hc-btn");
+  var heroCount = document.getElementById("heroCount");
+  var heroName = document.getElementById("heroName");
+  var heroLoc = document.getElementById("heroLoc");
+  var HERO_META = [
+    { name: "MGC Jewel", loc: "Bahria Town Phase 8" },
+    { name: "MGC Divine", loc: "Bahria Town Phase 8" },
+    { name: "Liberty Terraces", loc: "Bahria Town Phase 8" },
+    { name: "Picasso by MGC", loc: "Phase 7 · Bahria Town" },
+    { name: "El Casa by MGC", loc: "Mumtaz City · Islamabad" },
+    { name: "Holiday Inn & Suites", loc: "GT Road · DHA Phase II" }
+  ];
+  var HERO_DURATION = 6000;
+  var heroIdx = 0;
+  var heroTimer = null;
 
-/* ==========================================
-   SMOOTH SCROLL
-   ========================================== */
+  function heroPad(n) { return n < 10 ? "0" + n : String(n); }
+  function clearHeroTimer() {
+    if (heroTimer) { clearTimeout(heroTimer); heroTimer = null; }
+  }
+  function setHero(i, manual) {
+    if (!heroSlides.length) return;
+    heroIdx = (i + heroSlides.length) % heroSlides.length;
+    heroSlides.forEach(function (s, k) { s.classList.toggle("active", k === heroIdx); });
+    if (heroBtns.length) {
+      heroBtns.forEach(function (b, k) { b.classList.toggle("active", k === heroIdx); });
+    }
+    if (heroCount) heroCount.innerHTML = heroPad(heroIdx + 1) + " <b>/ " + heroPad(heroSlides.length) + "</b>";
+    if (HERO_META[heroIdx]) {
+      if (heroName) heroName.textContent = HERO_META[heroIdx].name;
+      if (heroLoc) heroLoc.textContent = HERO_META[heroIdx].loc;
+    }
+    if (manual && !reduced) restartHero();
+    else if (reduced) clearHeroTimer();
+  }
+  function nextHero() { setHero(heroIdx + 1, true); }
+  function restartHero() {
+    clearHeroTimer();
+    heroTimer = setTimeout(nextHero, HERO_DURATION);
+  }
 
-document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
-    anchor.addEventListener("click", function (e) {
-        const href = this.getAttribute("href");
-        if (href && href !== "#") {
-            const target = document.querySelector(href);
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-        }
+  if (heroSlides.length) {
+    heroBtns.forEach(function (b) {
+      b.addEventListener("click", function () {
+        setHero(parseInt(b.getAttribute("data-hero"), 10) || 0, true);
+      });
     });
-});
-
-/* ==========================================
-   MOBILE MENU
-   ========================================== */
-
-function setMenuState(open) {
-    const navLinks = document.querySelector(".nav-links");
-    const hamburger = document.querySelector(".hamburger");
-    if (open) {
-        document.body.classList.add("menu-open");
-        if (hamburger) hamburger.setAttribute("aria-expanded", "true");
+    if (reduced) {
+      setHero(0);
     } else {
-        document.body.classList.remove("menu-open");
-        if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+      setHero(0);
+      restartHero();
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) clearHeroTimer();
+        else restartHero();
+      });
+      window.addEventListener("focus", restartHero);
+      var heroEl = document.getElementById("hero");
+      if (heroEl && "IntersectionObserver" in window) {
+        var heroVis = new IntersectionObserver(function (entries) {
+          if (entries[0].isIntersecting) restartHero();
+          else clearHeroTimer();
+        }, { threshold: 0.15 });
+        heroVis.observe(heroEl);
+      }
     }
-    if (navLinks) navLinks.classList.toggle("open", open);
-    if (hamburger) hamburger.classList.toggle("active", open);
-}
+    /* Preload the next slide so the first crossfade is instant */
+    if (!reduced) {
+      var pre = new Image();
+      pre.src = heroSlides[1].querySelector("img").src;
+    }
+  }
 
-function toggleMenu() {
-    const navLinks = document.querySelector(".nav-links");
-    if (!navLinks) return;
-    setMenuState(!navLinks.classList.contains("open"));
-}
+  /* ---------- Calculator [22] ---------- */
+  var propValue = document.getElementById("propValue");
+  var downPct = document.getElementById("downPct");
+  var duration = document.getElementById("duration");
+  var resInitial = document.getElementById("resInitial");
+  var resBalance = document.getElementById("resBalance");
+  var resMonthly = document.getElementById("resMonthly");
+  var calcWaBtn = document.getElementById("calcWaBtn");
 
-function closeMenu() {
-    setMenuState(false);
-}
-
-function setupMobileMenu() {
-    if (setupMobileMenu.initialized) return;
-    setupMobileMenu.initialized = true;
-
-    document.querySelectorAll(".nav-link").forEach(function (link) {
-        link.addEventListener("click", closeMenu);
+  function fmtPkr(n) {
+    return "PKR " + Math.round(n).toLocaleString("en-PK");
+  }
+  function calc() {
+    var v = parseFloat(propValue.value) || 0;
+    var d = parseFloat(downPct.value) || 0;
+    var m = parseInt(duration.value, 10) || 96;
+    var initial = v * (d / 100);
+    var balance = v - initial;
+    var monthly = m > 0 ? balance / m : 0;
+    if (resInitial) resInitial.textContent = fmtPkr(initial);
+    if (resBalance) resBalance.textContent = fmtPkr(balance);
+    if (resMonthly) resMonthly.textContent = fmtPkr(monthly);
+    return { v: v, d: d, m: m, initial: initial, balance: balance, monthly: monthly };
+  }
+  if (propValue && downPct && duration) {
+    [propValue, downPct, duration].forEach(function (el) {
+      el.addEventListener("input", calc);
+      el.addEventListener("change", calc);
     });
-
-    document.addEventListener("click", function (e) {
-        const nav = document.querySelector(".navbar");
-        if (nav && !nav.contains(e.target)) {
-            closeMenu();
-        }
+    calc();
+  }
+  if (calcWaBtn) {
+    calcWaBtn.addEventListener("click", function () {
+      var r = calc();
+      var msg =
+        "Hello Ayan, I used the 4A Real Estate calculator.\n" +
+        "Property Value: " + fmtPkr(r.v) + "\n" +
+        "Down Payment: " + r.d + "% (" + fmtPkr(r.initial) + ")\n" +
+        "Duration: " + r.m + " months\n" +
+        "Estimated Monthly Installment: " + fmtPkr(r.monthly) + "\n" +
+        "Please share the best matching MGC project and current payment details.";
+      openWa(msg);
     });
+  }
 
-    document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") {
-            closeMenu();
-        }
-    });
-}
+  /* ---------- Matching questionnaire [23] ---------- */
+  var matchForm = document.getElementById("matchForm");
+  var matchResult = document.getElementById("matchResult");
+  var matchTitle = document.getElementById("matchTitle");
+  var matchText = document.getElementById("matchText");
+  var matchWa = document.getElementById("matchWa");
 
-setupMobileMenu();
+  var MATCH_COPY = {
+    Apartment: {
+      title: "A home — residential focus",
+      text: "Start with the residential options 4A represents right now — MGC Jewel (1–2 bedroom, jacuzzi and beach-view apartments, penthouses), El Casa by MGC (1–3 bedroom with Margalla views), Liberty Terraces (open terrace apartments) or MGC-5 (Phase 7). Tell Ayan your size preference and area, and he'll shortlist real availability on WhatsApp."
+    },
+    Commercial: {
+      title: "A commercial investment",
+      text: "MGC Jewel offers brand-committed shops, an IT Mart, kiosks and a 12-kanal HyperMart; MGC Divine has retail shops and executive offices; Picasso by MGC is a food-business destination near Food Street. Share your budget with Ayan and he'll match you to open units."
+    },
+    Hospitality: {
+      title: "A hospitality investment",
+      text: "Best Western PLUS inside MGC Jewel (Standard, Executive, Deluxe suites), the MGC Hotel inside MGC Divine, and the Holiday Inn &amp; Suites on GT Road — an IHG property targeting August 2028. These earn through professionally managed hotel operations."
+    },
+    "Long-Term Investment": {
+      title: "A long-term investment",
+      text: "Bahria Town Phase 8 anchors flagship appreciation (MGC Jewel, Liberty Terraces), Mumtaz City offers airport-side growth (El Casa), and GT Road hospitality compounds over many years. Let's map your budget against 4A's current shortlist."
+    },
+    "Not Sure": {
+      title: "Not sure yet — perfect.",
+      text: "Most good investments start exactly here. Ayan will ask three questions — budget, timeline, and whether it's for living or earning — and recommend just two or three projects worth your attention. No pressure, no jargon."
+    }
+  };
 
-/* ==========================================
-   INPUT FORMATTING
-   ========================================== */
+  function matchRecommend() {
+    var budget = document.getElementById("mBudget").value;
+    var type = document.getElementById("mType").value;
+    var loc = document.getElementById("mLoc").value;
+    var purpose = document.getElementById("mPurpose").value;
 
-const nameInput = document.getElementById("name");
-if (nameInput) {
-    nameInput.addEventListener("input", function () {
-        this.value = this.value.replace(/[^a-zA-Z\s\-\']|^[\s\-']+|[\s\-']+$/g, "");
-    });
-}
-
-const phoneInput = document.getElementById("phone");
-if (phoneInput) {
-    phoneInput.addEventListener("input", function () {
-        this.value = this.value.replace(/[^\d\-\+\(\)\s]/g, "");
-    });
-}
-
-/* ==========================================
-   ANIMATIONS
-   ========================================== */
-
-const animationStyles = document.createElement("style");
-animationStyles.textContent = `
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+    var empty = [budget, type, loc, purpose].indexOf("") !== -1;
+    if (empty) {
+      if (matchResult) matchResult.classList.remove("show");
+      return;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    var c = MATCH_COPY[type] || MATCH_COPY["Not Sure"];
+    var lead;
+    if (loc === "Bahria Town") {
+      lead = "Bahria Town holds the dense commercial core — MGC Jewel, Divine, Liberty Terraces, MGC-5 and Picasso all sit there. ";
+    } else if (loc === "DHA / GT Road") {
+      lead = "The GT Road / DHA-II belt is where the Holiday Inn &amp; Suites will rise, and it links directly to Bahria Town's core. ";
+    } else if (loc === "Mumtaz City") {
+      lead = "Mumtaz City is the airport-side growth corridor — home of El Casa by MGC. ";
+    } else {
+      lead = "Across the whole Islamabad–Rawalpindi corridor, ";
     }
 
-    .fade-in {
-        animation: fadeIn 0.6s ease-out forwards;
+    var budgetNote =
+      budget === "Under 50 Lac" ? " With an under-50-lac entry point, ask Ayan which starter units currently fit."
+      : budget === "5 Crore+" ? " At the 5-crore-plus level, Ayan can compare the flagship and hospitality options head to head."
+      : " Against your " + budget + " budget, Ayan can point you at the plans that currently fit.";
+
+    if (matchTitle) matchTitle.textContent = c.title;
+    if (matchText) matchText.innerHTML = lead + c.text + budgetNote;
+    if (matchWa) {
+      matchWa.setAttribute("href", waUrl(
+        "Hello Ayan, I used the 4A Real Estate matching questionnaire.\n" +
+        "Budget: " + budget + "\n" +
+        "Property Type: " + type + "\n" +
+        "Preferred Location: " + loc + "\n" +
+        "Purpose: " + purpose + "\n" +
+        "Please recommend the best matching MGC projects and share current availability and payment plans."
+      ));
     }
-`;
-document.head.appendChild(animationStyles);
+    if (matchResult) {
+      matchResult.classList.add("show");
+      matchResult.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+    }
+  }
 
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (matchForm) matchForm.addEventListener("submit", function (e) { e.preventDefault(); matchRecommend(); });
 
-function initializeAOS() {
-    if (prefersReducedMotion) return;
-    const elements = document.querySelectorAll(
-        ".property-card, .featured-card, .stat-box, .why-card, .insight-card, .category-card, .payment-card"
-    );
-    elements.forEach(function (el, index) {
-        el.style.animation = `slideUp 0.6s ease-out ${index * 0.08}s both`;
+  /* ---------- Lead form [29] ---------- */
+  var leadForm = document.getElementById("leadForm");
+  var formSuccess = document.getElementById("formSuccess");
+  var formWaBtn = document.getElementById("formWaBtn");
+  var pendingMsg = GENERAL_MSG;
+
+  function submitForm(e) {
+    e.preventDefault();
+    var name = (document.getElementById("name").value || "").trim();
+    var phone = (document.getElementById("phone").value || "").trim();
+
+    if (!name || !phone) {
+      leadForm.reportValidity();
+      return;
+    }
+    var interest = document.getElementById("interest").value;
+    var project = document.getElementById("preferredProject").value;
+    var budget = document.getElementById("budget").value;
+    var message = document.getElementById("message").value.trim();
+
+    var msg =
+      "New property inquiry from the 4A Real Estate website.\n" +
+      "Name: " + name + "\n" +
+      "Phone: " + phone + "\n" +
+      "Interested In: " + interest + "\n" +
+      "Preferred Project: " + project + "\n" +
+      "Budget: " + budget +
+      (message ? "\nMessage: " + message : "");
+
+    pendingMsg = msg;
+    if (formWaBtn) formWaBtn.setAttribute("href", waUrl(msg));
+    leadForm.hidden = true;
+    if (formSuccess) formSuccess.hidden = false;
+  }
+  if (leadForm) leadForm.addEventListener("submit", submitForm);
+
+  /* ---------- Lightbox ---------- */
+  var LB_SEL = ".gal-item img, .type-card img, .duo-item img";
+  var lightbox = null;
+  var LB_DECK = [];
+  var LB_IDX = 0;
+
+  function renderLightbox() {
+    if (!lightbox) return;
+    var item = LB_DECK[LB_IDX];
+    if (!item) return;
+    lightbox.querySelector("img").setAttribute("src", item.src);
+    lightbox.querySelector("img").setAttribute("alt", item.alt || "");
+    lightbox.querySelector(".lb-caption").textContent = item.cap || "";
+    lightbox.querySelector(".lb-count").textContent = (LB_IDX + 1) + " / " + LB_DECK.length;
+  }
+  function stepLightbox(d) {
+    if (!LB_DECK.length) return;
+    LB_IDX = (LB_IDX + d + LB_DECK.length) % LB_DECK.length;
+    renderLightbox();
+  }
+  function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  function ensureLightbox() {
+    if (lightbox) return;
+    lightbox = document.createElement("div");
+    lightbox.className = "lightbox";
+    lightbox.setAttribute("role", "dialog");
+    lightbox.setAttribute("aria-modal", "true");
+    lightbox.innerHTML =
+      '<button class="lb-close" aria-label="Close image">&times;</button>' +
+      '<button class="lb-prev" aria-label="Previous image">&#8249;</button>' +
+      '<button class="lb-next" aria-label="Next image">&#8250;</button>' +
+      '<span class="lb-count" aria-live="polite"></span>' +
+      '<img alt="">' +
+      '<div class="lb-caption"></div>';
+    document.body.appendChild(lightbox);
+
+    lightbox.querySelector(".lb-close").addEventListener("click", closeLightbox);
+    lightbox.querySelector(".lb-prev").addEventListener("click", function (e) {
+      e.stopPropagation();
+      stepLightbox(-1);
     });
-}
-
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: "0px 0px -100px 0px"
-};
-
-const observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-            if (prefersReducedMotion) {
-                observer.unobserve(entry.target);
-                return;
-            }
-            entry.target.classList.add("fade-in");
-            observer.unobserve(entry.target);
-        }
+    lightbox.querySelector(".lb-next").addEventListener("click", function (e) {
+      e.stopPropagation();
+      stepLightbox(1);
     });
-}, observerOptions);
-
-document.querySelectorAll("section").forEach(function (section) {
-    observer.observe(section);
-});
-
-/* ==========================================
-   RESIZE
-   ========================================== */
-
-let resizeTimer;
-window.addEventListener("resize", function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function () {
-        if (window.innerWidth >= 992) {
-            closeMenu();
-        }
-        setupMobileMenu();
-    }, 250);
-});
-
-/* ==========================================
-   ANALYTICS / TRACKING
-   ========================================== */
-
-function trackPageView() {
-    console.log("Page View:", {
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-        referrer: document.referrer || "direct"
+    lightbox.addEventListener("click", function (e) {
+      if (e.target === lightbox) closeLightbox();
     });
-}
-
-trackPageView();
-
-document.querySelectorAll(".btn").forEach(function (button) {
-    button.addEventListener("click", function () {
-        console.log("Button clicked:", this.textContent);
+    window.addEventListener("keydown", function (e) {
+      if (!lightbox || !lightbox.classList.contains("open")) return;
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowLeft") stepLightbox(-1);
+      else if (e.key === "ArrowRight") stepLightbox(1);
     });
-});
+    var x0 = null;
+    lightbox.addEventListener("touchstart", function (e) {
+      x0 = e.touches[0].clientX;
+    }, { passive: true });
+    lightbox.addEventListener("touchend", function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40) stepLightbox(dx < 0 ? 1 : -1);
+      x0 = null;
+    }, { passive: true });
+  }
 
-/* ==========================================
-   INIT
-   ========================================== */
+  document.querySelectorAll(LB_SEL).forEach(function (img) {
+    img.addEventListener("click", function () {
+      var imgs = document.querySelectorAll(LB_SEL);
+      var items = [];
+      imgs.forEach(function (im) {
+        items.push({
+          src: im.currentSrc || im.src,
+          alt: im.alt || "",
+          cap: im.getAttribute("data-cap") || ""
+        });
+      });
+      var cur = img.currentSrc || img.src;
+      var idx = -1;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].src === cur) { idx = i; break; }
+      }
+      ensureLightbox();
+      LB_DECK = items;
+      LB_IDX = idx >= 0 ? idx : 0;
+      renderLightbox();
+      lightbox.classList.add("open");
+      document.body.style.overflow = "hidden";
+    });
+  });
 
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("4A Real Estate website loaded successfully");
-    initializeAOS();
-    setupMobileMenu();
-    calculateInvestment();
-});
-
-console.log("✓ 4A Real Estate - JavaScript loaded and ready");
+  /* ---------- FAQ (native details; nothing needed) ---------- */
+})();

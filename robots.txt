@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://4arealestate.com/sitemap.xml
+Sitemap: https://4a-real-estate.vercel.app/sitemap.xml

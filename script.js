@@ -54,13 +54,19 @@
     if (!mobileNav) return;
     mobileNav.classList.remove("open");
     document.body.classList.remove("menu-open");
-    if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+    if (hamburger) {
+      hamburger.setAttribute("aria-expanded", "false");
+      hamburger.setAttribute("aria-label", "Open navigation menu");
+    }
   }
   function toggleMenu() {
     if (!mobileNav) return;
     var open = mobileNav.classList.toggle("open");
     document.body.classList.toggle("menu-open", open);
-    if (hamburger) hamburger.setAttribute("aria-expanded", String(open));
+    if (hamburger) {
+      hamburger.setAttribute("aria-expanded", String(open));
+      hamburger.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+    }
   }
   if (hamburger) hamburger.addEventListener("click", toggleMenu);
   if (mobileNav) {
@@ -69,7 +75,7 @@
     });
   }
   window.addEventListener("resize", function () {
-    if (window.innerWidth > 991) closeMenu();
+    if (window.innerWidth > 1199) closeMenu();
   });
   window.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closeMenu();

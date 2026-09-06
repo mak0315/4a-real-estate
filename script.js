@@ -244,7 +244,7 @@
     },
     Hospitality: {
       title: "A hospitality investment",
-      text: "Best Western PLUS inside MGC Jewel (Standard, Executive, Deluxe suites), the MGC Hotel inside MGC Divine, and the Holiday Inn &amp; Suites on GT Road — an IHG property targeting August 2028. These earn through professionally managed hotel operations."
+      text: "Best Western PLUS inside MGC Jewel (Standard, Executive, Deluxe suites), the MGC Hotel inside MGC Divine, and the Holiday Inn &amp; Suites on GT Road — Pakistan's first 4-star Holiday Inn, an IHG franchise. These earn through professionally managed hotel operations."
     },
     "Long-Term Investment": {
       title: "A long-term investment",
